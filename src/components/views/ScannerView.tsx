@@ -19,7 +19,7 @@ export const ScannerView = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const { toast } = useToast();
-  const { getProductByCode, updateProductStock, addMovement } = useWMS();
+  const { getProductByCode, updateProductStock, addMovement, products } = useWMS();
 
   const startCamera = async () => {
     try {
@@ -51,8 +51,6 @@ export const ScannerView = () => {
   };
 
   const simulateQRScan = () => {
-    // Simulate scanning a random product code from existing products
-    const { products } = useWMS();
     if (products.length > 0) {
       const randomProduct = products[Math.floor(Math.random() * products.length)];
       processScannedCode(randomProduct.code);
@@ -63,6 +61,7 @@ export const ScannerView = () => {
     const product = getProductByCode(code);
     if (product) {
       setScannedProduct(product);
+      setQuantity(1); // Reset quantity to 1 when a new product is scanned
       toast({
         title: "Producto encontrado",
         description: `${product.name} - Stock actual: ${product.stock}`,
@@ -83,8 +82,23 @@ export const ScannerView = () => {
     }
   };
 
+  const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    // Allow empty string or valid positive numbers
+    if (value === '' || (!isNaN(Number(value)) && Number(value) >= 0)) {
+      setQuantity(value === '' ? 0 : Number(value));
+    }
+  };
+
   const processMovement = () => {
-    if (!scannedProduct) return;
+    if (!scannedProduct || quantity <= 0) {
+      toast({
+        title: "Cantidad inválida",
+        description: "La cantidad debe ser mayor a 0",
+        variant: "destructive"
+      });
+      return;
+    }
 
     const newStock = operationType === 'entrada' 
       ? scannedProduct.stock + quantity 
@@ -124,7 +138,7 @@ export const ScannerView = () => {
       stock: newStock
     });
     
-    // Reset form
+    // Reset quantity to 1 after processing
     setQuantity(1);
   };
 
@@ -287,8 +301,9 @@ export const ScannerView = () => {
                     type="number"
                     min="1"
                     value={quantity}
-                    onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
+                    onChange={handleQuantityChange}
                     className="mt-1"
+                    placeholder="Ingrese la cantidad"
                   />
                 </div>
 
@@ -300,6 +315,7 @@ export const ScannerView = () => {
                       ? 'bg-green-600 hover:bg-green-700' 
                       : 'bg-red-600 hover:bg-red-700'
                   }`}
+                  disabled={quantity <= 0}
                 >
                   {operationType === 'entrada' ? (
                     <Plus className="h-4 w-4 mr-2" />
