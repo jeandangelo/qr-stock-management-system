@@ -1,71 +1,16 @@
 
 import { useState } from 'react';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Search, Package, Plus, Edit, AlertTriangle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Search, Package, Edit, AlertTriangle } from 'lucide-react';
+import { useWMS } from '@/contexts/WMSContext';
+import { AddProductDialog } from '@/components/AddProductDialog';
 
 export const InventoryView = () => {
   const [searchTerm, setSearchTerm] = useState('');
-
-  const products = [
-    {
-      id: 1,
-      code: 'PROD001',
-      name: 'Laptop Dell XPS 13',
-      category: 'Electrónicos',
-      stock: 25,
-      minStock: 10,
-      location: 'A1-01',
-      value: 1299.99,
-      supplier: 'Dell Technologies'
-    },
-    {
-      id: 2,
-      code: 'PROD002',
-      name: 'Mouse Logitech MX Master',
-      category: 'Accesorios',
-      stock: 5,
-      minStock: 15,
-      location: 'B2-05',
-      value: 89.99,
-      supplier: 'Logitech'
-    },
-    {
-      id: 3,
-      code: 'PROD003',
-      name: 'Teclado Mecánico RGB',
-      category: 'Accesorios',
-      stock: 18,
-      minStock: 12,
-      location: 'B1-03',
-      value: 149.99,
-      supplier: 'Corsair'
-    },
-    {
-      id: 4,
-      code: 'PROD004',
-      name: 'Monitor Samsung 27"',
-      category: 'Electrónicos',
-      stock: 2,
-      minStock: 8,
-      location: 'A3-02',
-      value: 299.99,
-      supplier: 'Samsung'
-    },
-    {
-      id: 5,
-      code: 'PROD005',
-      name: 'Cable USB-C',
-      category: 'Cables',
-      stock: 45,
-      minStock: 30,
-      location: 'C1-10',
-      value: 19.99,
-      supplier: 'Anker'
-    }
-  ];
+  const { products } = useWMS();
 
   const filteredProducts = products.filter(product =>
     product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -89,10 +34,7 @@ export const InventoryView = () => {
           <h1 className="text-3xl font-bold text-gray-900">Inventario</h1>
           <p className="text-gray-600">Gestión de productos y stock</p>
         </div>
-        <Button className="bg-blue-600 hover:bg-blue-700">
-          <Plus className="h-4 w-4 mr-2" />
-          Nuevo Producto
-        </Button>
+        <AddProductDialog />
       </div>
 
       {/* Summary Cards */}

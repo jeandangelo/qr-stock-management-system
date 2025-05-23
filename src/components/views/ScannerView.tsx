@@ -7,25 +7,19 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { Camera, Package, Plus, Minus, QrCode, Type } from 'lucide-react';
+import { useWMS, Product } from '@/contexts/WMSContext';
 
 export const ScannerView = () => {
   const [scanMode, setScanMode] = useState<'camera' | 'manual'>('camera');
   const [operationType, setOperationType] = useState<'entrada' | 'salida'>('entrada');
   const [manualCode, setManualCode] = useState('');
   const [quantity, setQuantity] = useState(1);
-  const [scannedProduct, setScannedProduct] = useState<any>(null);
+  const [scannedProduct, setScannedProduct] = useState<Product | null>(null);
   const [isScanning, setIsScanning] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const { toast } = useToast();
-
-  // Mock product data
-  const mockProducts = {
-    'PROD001': { name: 'Laptop Dell XPS 13', stock: 25, location: 'A1-01' },
-    'PROD002': { name: 'Mouse Logitech MX Master', stock: 15, location: 'B2-05' },
-    'PROD003': { name: 'Teclado Mecánico RGB', stock: 8, location: 'B1-03' },
-    'PROD004': { name: 'Monitor Samsung 27"', stock: 12, location: 'A3-02' },
-  };
+  const { getProductByCode, updateProductStock, addMovement } = useWMS();
 
   const startCamera = async () => {
     try {
@@ -57,16 +51,18 @@ export const ScannerView = () => {
   };
 
   const simulateQRScan = () => {
-    // Simulate scanning a random product code
-    const codes = Object.keys(mockProducts);
-    const randomCode = codes[Math.floor(Math.random() * codes.length)];
-    processScannedCode(randomCode);
+    // Simulate scanning a random product code from existing products
+    const { products } = useWMS();
+    if (products.length > 0) {
+      const randomProduct = products[Math.floor(Math.random() * products.length)];
+      processScannedCode(randomProduct.code);
+    }
   };
 
   const processScannedCode = (code: string) => {
-    const product = mockProducts[code as keyof typeof mockProducts];
+    const product = getProductByCode(code);
     if (product) {
-      setScannedProduct({ code, ...product });
+      setScannedProduct(product);
       toast({
         title: "Producto encontrado",
         description: `${product.name} - Stock actual: ${product.stock}`,
@@ -103,22 +99,33 @@ export const ScannerView = () => {
       return;
     }
 
-    // Simulate API call
-    setTimeout(() => {
-      toast({
-        title: "Movimiento procesado",
-        description: `${operationType === 'entrada' ? 'Entrada' : 'Salida'} de ${quantity} unidades registrada`,
-      });
-      
-      // Update the product stock in our mock data
-      setScannedProduct({
-        ...scannedProduct,
-        stock: newStock
-      });
-      
-      // Reset form
-      setQuantity(1);
-    }, 500);
+    // Update product stock
+    updateProductStock(scannedProduct.code, newStock);
+
+    // Add movement record
+    addMovement({
+      type: operationType,
+      product: scannedProduct.name,
+      productCode: scannedProduct.code,
+      quantity: quantity,
+      location: scannedProduct.location,
+      user: 'Usuario Actual',
+      reference: `${operationType.toUpperCase()}-${Date.now()}`
+    });
+
+    toast({
+      title: "Movimiento procesado",
+      description: `${operationType === 'entrada' ? 'Entrada' : 'Salida'} de ${quantity} unidades registrada`,
+    });
+    
+    // Update the scanned product with new stock
+    setScannedProduct({
+      ...scannedProduct,
+      stock: newStock
+    });
+    
+    // Reset form
+    setQuantity(1);
   };
 
   useEffect(() => {

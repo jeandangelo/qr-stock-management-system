@@ -6,79 +6,12 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Search, Filter, Download, ArrowUpCircle, ArrowDownCircle, Clock } from 'lucide-react';
+import { useWMS } from '@/contexts/WMSContext';
 
 export const MovementsView = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('all');
-
-  const movements = [
-    {
-      id: 1,
-      timestamp: '2024-01-15T10:30:00',
-      type: 'entrada',
-      product: 'Laptop Dell XPS 13',
-      productCode: 'PROD001',
-      quantity: 5,
-      location: 'A1-01',
-      user: 'Juan Pérez',
-      reference: 'PO-2024-001'
-    },
-    {
-      id: 2,
-      timestamp: '2024-01-15T10:15:00',
-      type: 'salida',
-      product: 'Mouse Logitech MX Master',
-      productCode: 'PROD002',
-      quantity: 12,
-      location: 'B2-05',
-      user: 'María García',
-      reference: 'SO-2024-045'
-    },
-    {
-      id: 3,
-      timestamp: '2024-01-15T09:45:00',
-      type: 'entrada',
-      product: 'Teclado Mecánico RGB',
-      productCode: 'PROD003',
-      quantity: 8,
-      location: 'B1-03',
-      user: 'Carlos López',
-      reference: 'PO-2024-002'
-    },
-    {
-      id: 4,
-      timestamp: '2024-01-15T09:30:00',
-      type: 'salida',
-      product: 'Monitor Samsung 27"',
-      productCode: 'PROD004',
-      quantity: 3,
-      location: 'A3-02',
-      user: 'Ana Rodríguez',
-      reference: 'SO-2024-046'
-    },
-    {
-      id: 5,
-      timestamp: '2024-01-14T16:20:00',
-      type: 'entrada',
-      product: 'Cable USB-C',
-      productCode: 'PROD005',
-      quantity: 50,
-      location: 'C1-10',
-      user: 'Luis Martín',
-      reference: 'PO-2024-003'
-    },
-    {
-      id: 6,
-      timestamp: '2024-01-14T15:45:00',
-      type: 'salida',
-      product: 'Laptop Dell XPS 13',
-      productCode: 'PROD001',
-      quantity: 2,
-      location: 'A1-01',
-      user: 'Elena Vargas',
-      reference: 'SO-2024-047'
-    }
-  ];
+  const { movements } = useWMS();
 
   const filteredMovements = movements.filter(movement => {
     const matchesSearch = movement.product.toLowerCase().includes(searchTerm.toLowerCase()) ||
