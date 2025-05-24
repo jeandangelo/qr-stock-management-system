@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,7 +12,7 @@ export const ScannerView = () => {
   const [scanMode, setScanMode] = useState<'camera' | 'manual'>('camera');
   const [operationType, setOperationType] = useState<'entrada' | 'salida'>('entrada');
   const [manualCode, setManualCode] = useState('');
-  const [quantity, setQuantity] = useState(1);
+  const [quantity, setQuantity] = useState<string>('1');
   const [scannedProduct, setScannedProduct] = useState<Product | null>(null);
   const [isScanning, setIsScanning] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -61,7 +60,7 @@ export const ScannerView = () => {
     const product = getProductByCode(code);
     if (product) {
       setScannedProduct(product);
-      setQuantity(1); // Reset quantity to 1 when a new product is scanned
+      setQuantity('1'); // Reset quantity to '1' when a new product is scanned
       toast({
         title: "Producto encontrado",
         description: `${product.name} - Stock actual: ${product.stock}`,
@@ -84,14 +83,24 @@ export const ScannerView = () => {
 
   const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    // Allow empty string or valid positive numbers
-    if (value === '' || (!isNaN(Number(value)) && Number(value) >= 0)) {
-      setQuantity(value === '' ? 0 : Number(value));
+    
+    // Allow empty string
+    if (value === '') {
+      setQuantity('');
+      return;
+    }
+    
+    // Only allow positive numbers
+    const numericValue = Number(value);
+    if (!isNaN(numericValue) && numericValue > 0) {
+      setQuantity(value);
     }
   };
 
   const processMovement = () => {
-    if (!scannedProduct || quantity <= 0) {
+    const numericQuantity = Number(quantity);
+    
+    if (!scannedProduct || !quantity || numericQuantity <= 0) {
       toast({
         title: "Cantidad inválida",
         description: "La cantidad debe ser mayor a 0",
@@ -101,8 +110,8 @@ export const ScannerView = () => {
     }
 
     const newStock = operationType === 'entrada' 
-      ? scannedProduct.stock + quantity 
-      : scannedProduct.stock - quantity;
+      ? scannedProduct.stock + numericQuantity 
+      : scannedProduct.stock - numericQuantity;
 
     if (operationType === 'salida' && newStock < 0) {
       toast({
@@ -121,7 +130,7 @@ export const ScannerView = () => {
       type: operationType,
       product: scannedProduct.name,
       productCode: scannedProduct.code,
-      quantity: quantity,
+      quantity: numericQuantity,
       location: scannedProduct.location,
       user: 'Usuario Actual',
       reference: `${operationType.toUpperCase()}-${Date.now()}`
@@ -129,7 +138,7 @@ export const ScannerView = () => {
 
     toast({
       title: "Movimiento procesado",
-      description: `${operationType === 'entrada' ? 'Entrada' : 'Salida'} de ${quantity} unidades registrada`,
+      description: `${operationType === 'entrada' ? 'Entrada' : 'Salida'} de ${numericQuantity} unidades registrada`,
     });
     
     // Update the scanned product with new stock
@@ -138,8 +147,8 @@ export const ScannerView = () => {
       stock: newStock
     });
     
-    // Reset quantity to 1 after processing
-    setQuantity(1);
+    // Reset quantity to '1' after processing
+    setQuantity('1');
   };
 
   useEffect(() => {
@@ -315,7 +324,7 @@ export const ScannerView = () => {
                       ? 'bg-green-600 hover:bg-green-700' 
                       : 'bg-red-600 hover:bg-red-700'
                   }`}
-                  disabled={quantity <= 0}
+                  disabled={!quantity || Number(quantity) <= 0}
                 >
                   {operationType === 'entrada' ? (
                     <Plus className="h-4 w-4 mr-2" />
