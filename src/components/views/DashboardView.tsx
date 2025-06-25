@@ -1,66 +1,69 @@
 // src/components/views/DashboardView.tsx
 import React, { useState, useEffect } from 'react'; // Importa useState y useEffect
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Package, TrendingUp, AlertTriangle, Activity } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'; //
+import { Package, TrendingUp, AlertTriangle, Activity } from 'lucide-react'; //
 
 // --- Interfaces para los datos que esperamos del backend ---
 interface DashboardStats {
-  totalProducts: number;
-  totalValuedStock: number;
-  lowStockItems: number;
-  movementsToday: number;
+  totalProducts: number; //
+  totalValuedStock: number; //
+  lowStockItems: number; //
+  movementsToday: number; //
 }
 
 interface RecentMovement {
-  id: number;
+  id: number; //
   product_name: string; // Coincide con 'product_name' del backend
   type: string;        // Coincide con 'type' del backend
-  quantity: number;
+  quantity: number; //
   time: string;        // Coincide con 'time' del backend (hora formateada)
+  ubicacion_origen_codigo?: string; // Añadido para mostrar en la actividad reciente
+  ubicacion_destino_codigo?: string; // Añadido para mostrar en la actividad reciente
 }
 
 interface LowStockAlert {
-  id: number;
+  id: number; //
   product_name: string; // Coincide con 'product_name' del backend
   current_stock: number; // Coincide con 'current_stock' del backend
   min_stock: number;   // Coincide con 'min_stock' del backend
+  codigo_barra: string; // Añadido para más detalles
 }
 
 // --- Funciones para llamar a tu API (pueden ir en src/services/api.ts) ---
 const API_BASE_URL = 'http://localhost:3001/api'; // ¡ASEGÚRATE DE QUE ESTA SEA LA URL CORRECTA DE TU BACKEND!
 
 async function getDashboardStats(): Promise<DashboardStats> {
-  const response = await fetch(`${API_BASE_URL}/dashboard/stats`);
-  if (!response.ok) {
-    throw new Error('Error al obtener las estadísticas del dashboard');
+  const response = await fetch(`${API_BASE_URL}/dashboard/stats`); //
+  if (!response.ok) { //
+    throw new Error('Error al obtener las estadísticas del dashboard'); //
   }
-  return response.json();
+  return response.json(); //
 }
 
 async function getRecentActivity(): Promise<RecentMovement[]> {
-  const response = await fetch(`${API_BASE_URL}/dashboard/recent-activity`);
-  if (!response.ok) {
-    throw new Error('Error al obtener la actividad reciente');
+  const response = await fetch(`${API_BASE_URL}/dashboard/recent-activity`); //
+  if (!response.ok) { //
+    throw new Error('Error al obtener la actividad reciente'); //
   }
-  return response.json();
+  return response.json(); //
 }
 
 async function getLowStockAlerts(): Promise<LowStockAlert[]> {
-  const response = await fetch(`${API_BASE_URL}/products/low-stock`);
-  if (!response.ok) {
-    throw new Error('Error al obtener las alertas de stock bajo');
+  const response = await fetch(`${API_BASE_URL}/products/low-stock`); //
+  if (!response.ok) { //
+    throw new Error('Error al obtener las alertas de stock bajo'); //
   }
-  return response.json();
+  return response.json(); //
 }
 
 // --- Componente DashboardView ---
 export const DashboardView = () => {
   // Estados para los datos del dashboard
-  const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [recentMovements, setRecentMovements] = useState<RecentMovement[]>([]);
-  const [lowStockAlerts, setLowStockAlerts] = useState<LowStockAlert[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [stats, setStats] = useState<DashboardStats | null>(null); //
+  const [recentMovements, setRecentMovements] = useState<RecentMovement[]>([]); //
+  const [lowStockAlerts, setLowStockAlerts] = useState<LowStockAlert[]>([]); //
+  const [loading, setLoading] = useState(true); //
+  const [error, setError] = useState<string | null>(null); //
 
   useEffect(() => {
     const fetchData = async () => {
@@ -68,20 +71,20 @@ export const DashboardView = () => {
         setLoading(true); // Inicia el estado de carga
 
         // Carga las estadísticas
-        const statsData = await getDashboardStats();
-        setStats(statsData);
+        const statsData = await getDashboardStats(); //
+        setStats(statsData); //
 
         // Carga la actividad reciente
-        const activityData = await getRecentActivity();
-        setRecentMovements(activityData);
+        const activityData = await getRecentActivity(); //
+        setRecentMovements(activityData); //
 
         // Carga las alertas de stock bajo
-        const alertsData = await getLowStockAlerts();
-        setLowStockAlerts(alertsData);
+        const alertsData = await getLowStockAlerts(); //
+        setLowStockAlerts(alertsData); //
 
       } catch (err: any) {
-        console.error("Error al cargar datos del dashboard:", err);
-        setError(err.message || "Error desconocido al cargar el dashboard.");
+        console.error("Error al cargar datos del dashboard:", err); //
+        setError(err.message || "Error desconocido al cargar el dashboard."); //
       } finally {
         setLoading(false); // Finaliza el estado de carga
       }
@@ -158,7 +161,7 @@ export const DashboardView = () => {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-gray-900">${stats.totalValuedStock.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+            <div className="text-2xl font-bold">${stats.totalValuedStock.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
             <p className="text-xs text-gray-500 mt-1">
                 {/* Puedes añadir una descripción dinámica si el backend la proporciona */}
                 {/* Por ahora, es estática */}
@@ -226,11 +229,15 @@ export const DashboardView = () => {
                   <div key={movement.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                     <div className="flex-1">
                       <p className="font-medium text-gray-900">{movement.product_name}</p>
-                      <p className="text-sm text-gray-600">{movement.time}</p>
+                      <p className="text-sm text-gray-600">
+                        {movement.time}
+                        {movement.ubicacion_origen_codigo && ` desde ${movement.ubicacion_origen_codigo}`}
+                        {movement.ubicacion_destino_codigo && ` a ${movement.ubicacion_destino_codigo}`}
+                      </p>
                     </div>
                     <div className="text-right">
                       <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                        movement.type === 'Entrada'
+                        movement.type === 'entrada' // Ajustado a 'entrada' para coincidir con tu backend
                           ? 'bg-green-100 text-green-800'
                           : 'bg-red-100 text-red-800'
                       }`}>
@@ -265,7 +272,7 @@ export const DashboardView = () => {
                   <div key={item.id} className="flex items-center justify-between p-3 border border-orange-200 rounded-lg bg-orange-50">
                     <div>
                       <p className="font-medium text-gray-900">{item.product_name}</p>
-                      <p className="text-sm text-gray-600">Stock actual: {item.current_stock}</p>
+                      <p className="text-sm text-gray-600">Stock actual: {item.current_stock} (Código: {item.codigo_barra})</p>
                     </div>
                     <div className="text-right">
                       <p className="text-sm text-orange-600 font-medium">Mín: {item.min_stock}</p>

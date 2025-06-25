@@ -1,5 +1,5 @@
-
-import { useState } from 'react';
+// src/components/views/MovementsView.tsx
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -11,15 +11,32 @@ import { useWMS } from '@/contexts/WMSContext';
 export const MovementsView = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('all');
-  const { movements } = useWMS();
+  const { movements, fetchMovements } = useWMS();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        await fetchMovements();
+      } catch (err: any) {
+        console.error("Error loading movements:", err);
+        setError(err.message || "No se pudieron cargar los movimientos.");
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadData();
+  }, [fetchMovements]);
 
   const filteredMovements = movements.filter(movement => {
     const matchesSearch = movement.product.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         movement.productCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         movement.referencia_externa?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          movement.user.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesFilter = filterType === 'all' || movement.type === filterType;
-    
+
+    const matchesFilter = filterType === 'all' || movement.type.toLowerCase() === filterType;
+
     return matchesSearch && matchesFilter;
   });
 
@@ -32,7 +49,7 @@ export const MovementsView = () => {
   };
 
   const getMovementIcon = (type: string) => {
-    return type === 'entrada' ? (
+    return type.toLowerCase() === 'entrada' ? (
       <ArrowUpCircle className="h-4 w-4 text-green-600" />
     ) : (
       <ArrowDownCircle className="h-4 w-4 text-red-600" />
@@ -40,23 +57,35 @@ export const MovementsView = () => {
   };
 
   const getMovementBadge = (type: string) => {
-    return type === 'entrada' ? (
+    return type.toLowerCase() === 'entrada' ? (
       <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
         Entrada
       </Badge>
-    ) : (
+    ) : type.toLowerCase() === 'salida' ? (
       <Badge className="bg-red-100 text-red-800 hover:bg-red-100">
         Salida
+      </Badge>
+    ) : (
+      <Badge className="bg-gray-100 text-gray-800 hover:bg-gray-100">
+        Traslado
       </Badge>
     );
   };
 
-  const todayMovements = movements.filter(m => 
-    new Date(m.timestamp).toDateString() === new Date().toDateString()
+  const todayMovements = movements.filter(m =>
+    new Date(m.fecha_movimiento || m.timestamp).toDateString() === new Date().toDateString()
   ).length;
 
-  const totalEntradas = movements.filter(m => m.type === 'entrada').length;
-  const totalSalidas = movements.filter(m => m.type === 'salida').length;
+  const totalEntradas = movements.filter(m => m.type.toLowerCase() === 'entrada').length;
+  const totalSalidas = movements.filter(m => m.type.toLowerCase() === 'salida').length;
+
+  if (loading) {
+    return <p>Cargando movimientos...</p>;
+  }
+
+  if (error) {
+    return <p className="text-red-500">Error: {error}</p>;
+  }
 
   return (
     <div className="space-y-6">
@@ -121,7 +150,7 @@ export const MovementsView = () => {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
               <Input
-                placeholder="Buscar por producto, código o usuario..."
+                placeholder="Buscar por producto, referencia o usuario..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
@@ -135,6 +164,7 @@ export const MovementsView = () => {
                 <SelectItem value="all">Todos</SelectItem>
                 <SelectItem value="entrada">Solo Entradas</SelectItem>
                 <SelectItem value="salida">Solo Salidas</SelectItem>
+                <SelectItem value="traslado">Solo Traslados</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -152,9 +182,9 @@ export const MovementsView = () => {
         <CardContent>
           <div className="space-y-4">
             {filteredMovements.map((movement) => {
-              const dateTime = formatDate(movement.timestamp);
+              const dateTime = formatDate(movement.fecha_movimiento || movement.timestamp);
               return (
-                <div key={movement.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                <div key={movement.movimiento_id || movement.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
                   <div className="flex items-center space-x-4">
                     <div className="flex-shrink-0">
                       {getMovementIcon(movement.type)}
@@ -167,14 +197,18 @@ export const MovementsView = () => {
                         {getMovementBadge(movement.type)}
                       </div>
                       <div className="flex flex-wrap items-center space-x-4 text-sm text-gray-500">
-                        <span>Código: {movement.productCode}</span>
                         <span>Cantidad: {movement.quantity}</span>
-                        <span>Ubicación: {movement.location}</span>
-                        <span>Usuario: {movement.user}</span>
+                        <span>
+                          Ubicación:
+                          {movement.ubicacion_origen && ` de ${movement.ubicacion_origen}`}
+                          {movement.ubicacion_destino && ` a ${movement.ubicacion_destino}`}
+                          {!movement.ubicacion_origen && !movement.ubicacion_destino && 'N/A'}
+                        </span>
+                        <span>Usuario: {movement.usuario || movement.user}</span>
                       </div>
-                      {movement.reference && (
+                      {movement.referencia_externa && (
                         <p className="text-xs text-gray-400 mt-1">
-                          Ref: {movement.reference}
+                          Ref: {movement.referencia_externa}
                         </p>
                       )}
                     </div>
@@ -187,7 +221,7 @@ export const MovementsView = () => {
               );
             })}
           </div>
-          
+
           {filteredMovements.length === 0 && (
             <div className="text-center py-8 text-gray-500">
               <Clock className="h-12 w-12 mx-auto mb-4 opacity-50" />

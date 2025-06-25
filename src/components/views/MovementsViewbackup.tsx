@@ -30,7 +30,7 @@ export interface AddProductFormData {
 }
 
 export interface Movement {
-  id: string; // Este ID es el que se usa en el frontend, y lo mapearemos desde el backend
+  id: string; 
   timestamp: string; 
   type: 'entrada' | 'salida' | 'traslado'; 
   product: string; 
@@ -40,15 +40,15 @@ export interface Movement {
   user: string; 
   reference: string; 
 
-  // Propiedades opcionales que vienen del backend
-  movimiento_id?: number; // El ID original en la tabla movimientos
+  // Propiedades que vienen del backend
+  movimiento_id?: number; 
   producto_id?: number; 
   ubicacion_origen?: string | null; 
   ubicacion_destino?: string | null; 
   usuario?: string; 
   fecha_movimiento?: string; 
   referencia_externa?: string | null; 
-  tipo_movimiento?: string; 
+  tipo_movimiento?: string; // <<< AGREGADO: Para consistencia con el backend >>>
 }
 
 
@@ -120,15 +120,15 @@ export const WMSProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       const rawData: any[] = await response.json();
       
       const processedMovements: Movement[] = rawData.map(movement => ({
-        id: movement.id ? movement.id.toString() : Date.now().toString(), // <<< CORREGIDO: Usar movement.id y fallback para safety >>>
-        timestamp: movement.fecha_movimiento || new Date().toISOString(), // Usar fecha_movimiento si existe, sino crear una
+        id: movement.movimiento_id.toString(), 
+        timestamp: movement.fecha_movimiento, 
         
-        type: movement.tipo_movimiento ? movement.tipo_movimiento.toLowerCase() as 'entrada' | 'salida' | 'traslado' : 'entrada', // Corregido: safety check
-        product: movement.product_name || 'Desconocido', // Corregido: safety check
+        type: movement.tipo_movimiento.toLowerCase() as 'entrada' | 'salida' | 'traslado',
+        product: movement.product_name,
         productCode: movement.product_code || '', 
-        quantity: parseFloat(movement.cantidad) || 0, 
+        quantity: parseFloat(movement.cantidad) || 0, // Mapea 'cantidad' del backend
         location: movement.ubicacion_origen || movement.ubicacion_destino || 'N/A', 
-        user: movement.usuario || 'Desconocido', // Corregido: safety check
+        user: movement.usuario,
         reference: movement.referencia_externa || '',
 
         // Mapeo directo de campos de la DB
@@ -139,7 +139,7 @@ export const WMSProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         usuario: movement.usuario,
         fecha_movimiento: movement.fecha_movimiento,
         referencia_externa: movement.referencia_externa,
-        tipo_movimiento: movement.tipo_movimiento, 
+        tipo_movimiento: movement.tipo_movimiento, // <<< AGREGADO: Asegura que esta propiedad esté aquí >>>
       }));
       setMovements(processedMovements);
     } catch (error: any) {
@@ -294,3 +294,5 @@ export const WMSProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     </WMSContext.Provider>
   );
 };
+
+// src/components/views/MovementsView.tsx

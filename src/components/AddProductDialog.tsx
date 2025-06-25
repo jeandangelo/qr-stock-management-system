@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -11,50 +10,57 @@ import { Plus } from 'lucide-react';
 export const AddProductDialog = () => {
   const [open, setOpen] = useState(false);
   const [formData, setFormData] = useState({
-    code: '',
+    // code: '', // <-- ELIMINADO: Ya no necesitamos un 'código interno' separado
     name: '',
     category: '',
     stock: 0,
     minStock: 0,
     location: '',
     value: 0,
-    supplier: ''
+    supplier: '',
+    codigo_barra: '' // Este será el identificador único para el escaneo
   });
 
   const { addProduct } = useWMS();
   const { toast } = useToast();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.code || !formData.name || !formData.category) {
+    // Validaciones: Ahora solo necesitamos validar codigo_barra, nombre y categoría
+    if (!formData.codigo_barra.trim() || !formData.name.trim() || !formData.category.trim()) {
       toast({
-        title: "Error",
-        description: "Por favor completa todos los campos requeridos",
+        title: "Error de validación",
+        description: "Por favor completa el Código de Barras, el Nombre del Producto y la Categoría (*). Asegúrate de que no estén solo en blanco.",
         variant: "destructive"
       });
       return;
     }
 
-    addProduct(formData);
-    
-    toast({
-      title: "Producto agregado",
-      description: `${formData.name} ha sido agregado al inventario`,
-    });
+    try {
+      await addProduct(formData); 
+      toast({
+        title: "Producto agregado",
+        description: `${formData.name} ha sido agregado al inventario.`,
+      });
 
-    setFormData({
-      code: '',
-      name: '',
-      category: '',
-      stock: 0,
-      minStock: 0,
-      location: '',
-      value: 0,
-      supplier: ''
-    });
-    
-    setOpen(false);
+      // Resetear el formulario después de un éxito
+      setFormData({
+        // code: '', // ELIMINADO
+        name: '',
+        category: '',
+        stock: 0,
+        minStock: 0,
+        location: '',
+        value: 0,
+        supplier: '',
+        codigo_barra: '' 
+      });
+      
+      setOpen(false); // Cerrar el diálogo
+    } catch (error: any) {
+      console.error("Error al agregar producto en el diálogo:", error);
+    }
   };
 
   const handleInputChange = (field: string, value: string | number) => {
@@ -76,21 +82,12 @@ export const AddProductDialog = () => {
         <DialogHeader>
           <DialogTitle>Agregar Nuevo Producto</DialogTitle>
           <DialogDescription>
-            Completa la información del producto que deseas agregar al inventario.
+            Completa la información del producto que deseas agregar al inventario. Los campos con (*) son obligatorios.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="code">Código*</Label>
-              <Input
-                id="code"
-                value={formData.code}
-                onChange={(e) => handleInputChange('code', e.target.value)}
-                placeholder="PROD006"
-                required
-              />
-            </div>
+            {/* <<< CAMBIO: Se eliminó el campo 'Código Interno' (code) aquí >>> */}
             <div>
               <Label htmlFor="category">Categoría*</Label>
               <Input
@@ -113,6 +110,19 @@ export const AddProductDialog = () => {
               required
             />
           </div>
+
+          {/* <<< ESTE ES AHORA EL ÚNICO IDENTIFICADOR PARA EL FRONTEND Y LA DB >>> */}
+          <div>
+            <Label htmlFor="codigo_barra">Código de Barras / QR*</Label>
+            <Input
+              id="codigo_barra" 
+              value={formData.codigo_barra} 
+              onChange={(e) => handleInputChange('codigo_barra', e.target.value)} 
+              placeholder="Ej: 123456789012" 
+              required
+            />
+          </div>
+          {/* <<< FIN DEL CAMBIO CLAVE >>> */}
 
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -139,7 +149,7 @@ export const AddProductDialog = () => {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="location">Ubicación</Label>
+              <Label htmlFor="location">Ubicación Principal</Label>
               <Input
                 id="location"
                 value={formData.location}

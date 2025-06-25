@@ -1,14 +1,13 @@
 // src/pages/InventoryView.tsx
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { AddProductDialog } from '@/components/AddProductDialog'; // Asegúrate de que esta ruta sea correcta
+import { AddProductDialog } from '@/components/AddProductDialog'; 
 import { Input } from '@/components/ui/input';
 import { Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useWMS } from '@/contexts/WMSContext'; // Importa el hook del contexto
+import { useWMS } from '@/contexts/WMSContext'; 
 
 export const InventoryView = () => {
-  // Obtén 'products' directamente del contexto. fetchProducts se maneja internamente.
   const { products } = useWMS();
 
   return (
@@ -16,7 +15,6 @@ export const InventoryView = () => {
       {/* Sección de Cabecera y Botón Nuevo Producto */}
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Inventario</h1>
-        {/* AddProductDialog ahora no necesita 'onProductAdded' porque usa el contexto */}
         <AddProductDialog />
       </div>
 
@@ -86,7 +84,7 @@ export const InventoryView = () => {
               <thead>
                 <tr>
                   <th className="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Producto</th>
-                  <th className="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Código</th>
+                  <th className="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Código de Barras</th> {/* Título de columna ajustado */}
                   <th className="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th>
                   <th className="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
                   <th className="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ubicación</th>
@@ -101,7 +99,7 @@ export const InventoryView = () => {
                       <div className="text-sm font-medium text-gray-900">{product.nombre}</div>
                       <div className="text-sm text-gray-500">{product.categoria}</div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{product.codigo}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{product.codigo_barra}</td> {/* Usar codigo_barra */}
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">{product.stock}</div>
                       <div className="text-xs text-gray-500">Mín: {product.min_stock}</div>

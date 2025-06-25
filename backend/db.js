@@ -10,6 +10,9 @@ const pool = new Pool({
   database: process.env.DB_NAME,  // Nombre de la base de datos desde .env
   password: process.env.DB_PASSWORD, // Contraseña del usuario desde .env
   port: process.env.DB_PORT,      // Puerto de PostgreSQL desde .env (por defecto 5432)
+  ssl: { // ¡ESTA ES LA SECCIÓN AÑADIDA PARA SSL!
+    rejectUnauthorized: false // Importante para desarrollo. En producción, considera un certificado válido.
+  }
 });
 
 // Opcional pero muy recomendado: Probar la conexión al iniciar el pool
